@@ -4,75 +4,20 @@ import (
 	"log"
 
 	"github.com/asdine/storm/v3"
+	"github.com/clysto/lovefortune/api"
 	"github.com/clysto/lovefortune/bark"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
-
-func listBarkTasks(manager *bark.BarkTaskManager) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(200, manager.Tasks())
-	}
-}
-
-func addBarkTask(manager *bark.BarkTaskManager, db *storm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var task bark.BarkTask
-		c.BindJSON(&task)
-		task.ID = uuid.NewString()
-		err := db.Save(&task)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"description": err.Error(),
-			})
-			return
-		}
-		manager.AddTask(&task)
-		c.JSON(200, task)
-	}
-}
-
-func deleteBarkTask(manager *bark.BarkTaskManager, db *storm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		print(id)
-		var task bark.BarkTask
-		err := db.One("ID", id, &task)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"description": err.Error(),
-			})
-			return
-		}
-		err = db.DeleteStruct(&task)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"description": err.Error(),
-			})
-			return
-		}
-		manager.RemoveTask(task.ID)
-		c.JSON(204, task)
-	}
-}
-
-func getLogs(db *storm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		var logs []bark.BarkTaskLog
-		err := db.Find("TaskID", id, &logs)
-		if err != nil {
-			c.JSON(400, gin.H{
-				"description": err.Error(),
-			})
-			return
-		}
-		c.JSON(200, logs)
-	}
-}
 
 func main() {
 	router := gin.Default()
+
+	// 允许跨域
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AddAllowHeaders("X-Access-Token")
+	router.Use(cors.New(config))
 
 	db, err := storm.Open("lovefortune.db")
 	if err != nil {
@@ -94,10 +39,13 @@ func main() {
 	taskManager.Start()
 	defer taskManager.Stop()
 
-	api := router.Group("/api")
-	api.GET("/tasks", listBarkTasks(taskManager))
-	api.POST("/tasks", addBarkTask(taskManager, db))
-	api.DELETE("/tasks/:id", deleteBarkTask(taskManager, db))
-	api.GET("/logs/:id", getLogs(db))
+	apiRouter := router.Group("/api")
+
+	apiRouter.Use(api.Auth())
+	apiRouter.GET("/tasks", api.ListBarkTasks(taskManager))
+	apiRouter.POST("/tasks", api.AddBarkTask(taskManager, db))
+	apiRouter.DELETE("/tasks/:id", api.DeleteBarkTask(taskManager, db))
+	apiRouter.GET("/logs/:id", api.GetLogs(db))
+
 	router.Run()
 }

@@ -23,6 +23,9 @@ type BarkTask struct {
 	Spec        string       `json:"spec"`
 	Description string       `json:"description"`
 	Content     string       `json:"content"`
+	Title       string       `json:"title"`
+	DeviceKey   string       `json:"deviceKey"`
+	Icon        string       `json:"icon"`
 }
 
 func (taskLog *BarkTaskLog) Printf(format string, a ...interface{}) (n int, err error) {
