@@ -2,22 +2,22 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/asdine/storm/v3"
 	"github.com/clysto/lovefortune/api"
 	"github.com/clysto/lovefortune/bark"
-	"github.com/gin-contrib/cors"
+	"github.com/clysto/lovefortune/plugin"
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	router := gin.Default()
+var QWEATHER_KEY = os.Getenv("QWEATHER_KEY")
 
-	// 允许跨域
-	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
-	config.AddAllowHeaders("X-Access-Token")
-	router.Use(cors.New(config))
+func main() {
+	router := gin.New()
+	gin.DisableConsoleColor()
+	router.Use(gin.Recovery())
+	router.Use(gin.Logger())
 
 	db, err := storm.Open("lovefortune.db")
 	if err != nil {
@@ -26,6 +26,8 @@ func main() {
 	defer db.Close()
 
 	taskManager := bark.NewManager(db)
+	taskManager.Plugin(plugin.NewDayPlugin())
+	taskManager.Plugin(plugin.NewWeatherPlugin(QWEATHER_KEY))
 
 	var tasks []bark.BarkTask
 	err = db.All(&tasks)

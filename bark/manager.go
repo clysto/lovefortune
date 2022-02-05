@@ -10,39 +10,50 @@ import (
 
 	"github.com/asdine/storm/v3"
 	"github.com/clysto/lovefortune/plugin"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 )
 
 type BarkTaskManager struct {
 	*cron.Cron
-	tasks []*BarkTask
-	db    *storm.DB
+	tasks   []*BarkTask
+	db      *storm.DB
+	plugins []plugin.Plugin
 }
 
 func NewManager(db *storm.DB) *BarkTaskManager {
 	c := cron.New(cron.WithSeconds())
 	manager := &BarkTaskManager{
-		Cron:  c,
-		tasks: nil,
-		db:    db,
+		Cron:    c,
+		tasks:   nil,
+		db:      db,
+		plugins: nil,
 	}
 	return manager
 }
 
-func taskFunc(task *BarkTask, taskLog *BarkTaskLog) {
+func (manager *BarkTaskManager) Plugin(plugin plugin.Plugin) {
+	manager.plugins = append(manager.plugins, plugin)
+}
+
+func (manager *BarkTaskManager) TaskFunc(task *BarkTask, taskLog *BarkTaskLog) {
 	var sendContent string
 	taskLog.Println("开始执行:", task.Description)
-	t, err := template.New("tmp").Parse(task.Content)
+	t := template.New("tmp")
+	if manager.plugins != nil {
+		for _, plugin := range manager.plugins {
+			t.Funcs(plugin.Funcs())
+		}
+	}
+	t, err := t.Parse(task.Content)
 	if err != nil {
+		taskLog.Println(err)
 		sendContent = task.Content
 	} else {
 		var buf bytes.Buffer
-		err = t.Execute(&buf, gin.H{
-			"LoveAnniversaryDays": plugin.LoveAnniversaryDays(),
-		})
+		err = t.Execute(&buf, nil)
 		if err != nil {
+			taskLog.Println(err)
 			sendContent = task.Content
 		} else {
 			sendContent = buf.String()
@@ -104,7 +115,7 @@ func (manager *BarkTaskManager) AddTask(task *BarkTask) error {
 		taskLog.TaskID = task.ID
 		taskLog.Start = time.Now()
 		// 执行发送任务
-		taskFunc(task, &taskLog)
+		manager.TaskFunc(task, &taskLog)
 		taskLog.End = time.Now()
 		manager.db.Save(&taskLog)
 	})

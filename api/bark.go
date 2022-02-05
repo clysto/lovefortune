@@ -23,14 +23,14 @@ func AddBarkTask(manager *bark.BarkTaskManager, db *storm.DB) gin.HandlerFunc {
 		err := manager.AddTask(&task)
 		if err != nil {
 			c.JSON(400, gin.H{
-				"description": err.Error(),
+				"details": err.Error(),
 			})
 			return
 		}
 		err = db.Save(&task)
 		if err != nil {
 			c.JSON(400, gin.H{
-				"description": err.Error(),
+				"details": err.Error(),
 			})
 			return
 		}
@@ -41,19 +41,18 @@ func AddBarkTask(manager *bark.BarkTaskManager, db *storm.DB) gin.HandlerFunc {
 func DeleteBarkTask(manager *bark.BarkTaskManager, db *storm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		print(id)
 		var task bark.BarkTask
 		err := db.One("ID", id, &task)
 		if err != nil {
 			c.JSON(400, gin.H{
-				"description": err.Error(),
+				"details": err.Error(),
 			})
 			return
 		}
 		err = db.DeleteStruct(&task)
 		if err != nil {
 			c.JSON(400, gin.H{
-				"description": err.Error(),
+				"details": err.Error(),
 			})
 			return
 		}
@@ -84,7 +83,7 @@ func GetLogs(db *storm.DB) gin.HandlerFunc {
 		err = db.Find("TaskID", id, &logs, storm.Limit(PAGE_SIZE), storm.Skip(PAGE_SIZE*pageQuery.Page))
 		if err != nil {
 			c.JSON(400, gin.H{
-				"description": err.Error(),
+				"details": err.Error(),
 			})
 			return
 		}

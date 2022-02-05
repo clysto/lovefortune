@@ -15,10 +15,9 @@ func Auth() gin.HandlerFunc {
 		if key == ACCESS_KEY {
 			c.Next()
 		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"description": "没有权限访问",
 			})
-			c.Abort()
 		}
 	}
 }
