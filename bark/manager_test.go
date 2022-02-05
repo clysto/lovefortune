@@ -25,8 +25,9 @@ func TestDay(t *testing.T) {
 		Spec:        "0 0 0 * * *",
 		Description: "test",
 		Title:       "test",
-		Content:     "在一起第{{ loveAnniversaryDays }}天",
+		Content:     "今天是我们在一起第{{ loveAnniversaryDays }}天啦！",
 		DeviceKey:   DEVICE_KEY,
+		Icon:        "https://www.gravatar.com/avatar/4976aa65dfbcc0755de7b76a7b540ad6?s=80",
 	}
 	var taskLog BarkTaskLog
 	taskLog.ID = uuid.NewString()
