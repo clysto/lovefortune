@@ -10,7 +10,7 @@ import (
 
 var (
 	URL = "https://devapi.qweather.com/v7/"
-	KEY = os.Getenv("QWEATHER_KEY")
+	Key = os.Getenv("QWEATHER_KEY")
 )
 
 type WeatherPlugin struct {
@@ -64,7 +64,7 @@ func (plugin *WeatherPlugin) Weather(location string) *WeatherResult {
 	client := &http.Client{}
 	req, _ := http.NewRequest(http.MethodGet, URL+"weather/now", nil)
 	q := req.URL.Query()
-	q.Add("key", KEY)
+	q.Add("key", Key)
 	q.Add("location", location)
 	req.URL.RawQuery = q.Encode()
 	resp, err := client.Do(req)

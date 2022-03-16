@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const PAGE_SIZE = 10
+const PageSize = 10
 
 func ListBarkTasks(manager *bark.BarkTaskManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -18,7 +18,12 @@ func ListBarkTasks(manager *bark.BarkTaskManager) gin.HandlerFunc {
 func AddBarkTask(manager *bark.BarkTaskManager, db *storm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var task bark.BarkTask
-		c.BindJSON(&task)
+		if err := c.BindJSON(&task); err != nil {
+			c.JSON(400, gin.H{
+				"details": err.Error(),
+			})
+			return
+		}
 		task.ID = uuid.NewString()
 		err := manager.AddTask(&task)
 		if err != nil {
@@ -80,7 +85,7 @@ func GetLogs(db *storm.DB) gin.HandlerFunc {
 			}
 		}
 		var logs []bark.BarkTaskLog
-		err = db.Find("TaskID", id, &logs, storm.Limit(PAGE_SIZE), storm.Skip(PAGE_SIZE*pageQuery.Page))
+		err = db.Find("TaskID", id, &logs, storm.Limit(PageSize), storm.Skip(PageSize*pageQuery.Page))
 		if err != nil {
 			c.JSON(400, gin.H{
 				"details": err.Error(),

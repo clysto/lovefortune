@@ -7,12 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var ACCESS_KEY = os.Getenv("ACCESS_KEY")
+var AccessKey = os.Getenv("ACCESS_KEY")
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.GetHeader("X-Access-Token")
-		if key == ACCESS_KEY {
+		if key == AccessKey {
 			c.Next()
 		} else {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
