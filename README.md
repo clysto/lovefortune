@@ -61,4 +61,4 @@ curl --request GET \
 
 ## 截图
 
-![screenshot](media/screenshot.jpg)
+<p><img width="400" src="./media/screenshot.jpg" alt="screenshot"></p>
